@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: tradex
+  profiles:
+    active: dev
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+tradex:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250655368566D5971}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24 hours
+  risk:
+    max-order-value: 100000.0000
+    max-order-quantity: 10000
+    max-daily-trading-value: 500000.0000
+  withdrawal:
+    minimum-amount: 10.0000
+    maximum-amount: 50000.0000
+    daily-limit: 100000.0000
+    monthly-limit: 500000.0000
