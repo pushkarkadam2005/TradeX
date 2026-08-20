@@ -38,9 +38,7 @@ CREATE TABLE trades (
     price         NUMERIC(19,4)  NOT NULL CHECK (price > 0),
     quantity      BIGINT         NOT NULL CHECK (quantity > 0),
     version       BIGINT         NOT NULL DEFAULT 0,
-    executed_at   TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+    executed_at   TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_trades_buy_order_id  ON trades(buy_order_id);
