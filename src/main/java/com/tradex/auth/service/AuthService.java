@@ -41,11 +41,12 @@ public class AuthService {
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());
+        Role assignedRole = (request.role() != null) ? request.role() : Role.ROLE_USER;
         User newUser = new User(
             request.email().toLowerCase().trim(),
             encodedPassword,
             request.fullName().trim(),
-            Role.ROLE_USER
+            assignedRole
         );
 
         User savedUser = userService.save(newUser);

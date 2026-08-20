@@ -1,5 +1,6 @@
 package com.tradex.auth.dto;
 
+import com.tradex.user.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,5 +15,7 @@ public record RegisterRequest(
     String password,
 
     @NotBlank(message = "Full name is required")
-    String fullName
+    String fullName,
+
+    Role role
 ) {}
