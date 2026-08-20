@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tradex}
     username: ${DB_USERNAME:tradex}
-    password: ${DB_PASSWORD:tradex}
+    password: ${DB_PASSWORD:tradex_secret_pass}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
