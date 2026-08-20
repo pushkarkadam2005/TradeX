@@ -76,11 +76,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.token) {",
-                  "        pm.collectionVariables.set('jwt_token', res.data.token);",
-                  "        console.log('Saved jwt_token:', res.data.token);",
+                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('jwt_token', token);",
+                  "        console.log('Saved jwt_token:', token);",
                   "    }",
                   "}"
                 ],
@@ -115,11 +116,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.token) {",
-                  "        pm.collectionVariables.set('admin_jwt_token', res.data.token);",
-                  "        console.log('Saved admin_jwt_token:', res.data.token);",
+                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('admin_jwt_token', token);",
+                  "        console.log('Saved admin_jwt_token:', token);",
                   "    }",
                   "}"
                 ],
@@ -154,11 +156,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.token) {",
-                  "        pm.collectionVariables.set('jwt_token', res.data.token);",
-                  "        console.log('Saved jwt_token:', res.data.token);",
+                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('jwt_token', token);",
+                  "        console.log('Saved jwt_token:', token);",
                   "    }",
                   "}"
                 ],
@@ -193,11 +196,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "    var res = pm.response.json();",
-                  "    if (res.data && res.data.token) {",
-                  "        pm.collectionVariables.set('admin_jwt_token', res.data.token);",
-                  "        console.log('Saved admin_jwt_token:', res.data.token);",
+                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('admin_jwt_token', token);",
+                  "        console.log('Saved admin_jwt_token:', token);",
                   "    }",
                   "}"
                 ],
