@@ -1,1256 +1,849 @@
 {
   "info": {
-    "_postman_id": "tradex-backend-api-collection-v2",
+    "_postman_id": "tradex-backend-api-collection-v3-final",
     "name": "TradeX Financial Platform API",
-    "description": "Production-Ready Postman Collection for TradeX Backend Trading System.\nClearly separated into Trader (User) Endpoints and Admin Endpoints with automated JWT token and ID capture.",
+    "description": "FINAL Postman Collection for TradeX Backend.\nSeparated into: 1. Public & Auth | 2. Trader Endpoints | 3. Admin Endpoints.\nAll tokens and IDs are auto-saved via post-response scripts.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080",
-      "type": "string"
-    },
-    {
-      "key": "jwt_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "admin_jwt_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "user_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "stock_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "order_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "withdrawal_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "kyc_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "notification_id",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl",           "value": "http://localhost:8080", "type": "string" },
+    { "key": "jwt_token",         "value": "", "type": "string" },
+    { "key": "admin_jwt_token",   "value": "", "type": "string" },
+    { "key": "user_id",           "value": "", "type": "string" },
+    { "key": "stock_symbol",      "value": "AAPL", "type": "string" },
+    { "key": "order_id",          "value": "", "type": "string" },
+    { "key": "withdrawal_id",     "value": "", "type": "string" },
+    { "key": "kyc_id",            "value": "", "type": "string" },
+    { "key": "notification_id",   "value": "", "type": "string" }
   ],
   "item": [
+
     {
       "name": "1. Public & Authentication",
       "item": [
+
         {
           "name": "Health Check",
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "health"]
-            },
-            "description": "Verify system uptime and service health."
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api","health"] },
+            "description": "No auth required. Verify the server is running."
           }
         },
+
         {
           "name": "Register Trader User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    var res = pm.response.json();",
-                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
-                  "    if (token) {",
-                  "        pm.collectionVariables.set('jwt_token', token);",
-                  "        console.log('Saved jwt_token:', token);",
-                  "    }",
-                  "    if (res.data && res.data.user && res.data.user.id) {",
-                  "        pm.collectionVariables.set('user_id', res.data.user.id);",
-                  "        console.log('Saved user_id:', res.data.user.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Register Trader - status 201', function() {",
+                "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                "});",
+                "var res = pm.response.json();",
+                "if (res.data && res.data.accessToken) {",
+                "    pm.collectionVariables.set('jwt_token', res.data.accessToken);",
+                "    pm.test('Trader jwt_token saved', function() { pm.expect(res.data.accessToken).to.not.be.empty; });",
+                "}",
+                "if (res.data && res.data.user && res.data.user.id) {",
+                "    pm.collectionVariables.set('user_id', res.data.user.id);",
+                "    pm.test('Trader user_id saved', function() { pm.expect(res.data.user.id).to.not.be.empty; });",
+                "}"
+              ]
             }
-          ],
+          }],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"trader1@tradex.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Alex Trader\",\n  \"role\": \"ROLE_USER\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
-            },
-            "description": "Register a new trader user."
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "description": "Register a new trader. Returns jwt_token + user_id (auto-saved)."
           }
         },
+
         {
           "name": "Login Trader User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    var res = pm.response.json();",
-                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
-                  "    if (token) {",
-                  "        pm.collectionVariables.set('jwt_token', token);",
-                  "        console.log('Saved jwt_token:', token);",
-                  "    }",
-                  "    if (res.data && res.data.user && res.data.user.id) {",
-                  "        pm.collectionVariables.set('user_id', res.data.user.id);",
-                  "        console.log('Saved user_id:', res.data.user.id);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Login Trader - status 200', function() {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "var res = pm.response.json();",
+                "if (res.data && res.data.accessToken) {",
+                "    pm.collectionVariables.set('jwt_token', res.data.accessToken);",
+                "    pm.test('jwt_token saved', function() { pm.expect(res.data.accessToken).to.not.be.empty; });",
+                "}",
+                "if (res.data && res.data.user && res.data.user.id) {",
+                "    pm.collectionVariables.set('user_id', res.data.user.id);",
+                "    pm.test('user_id saved', function() { pm.expect(res.data.user.id).to.not.be.empty; });",
+                "}"
+              ]
             }
-          ],
+          }],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"trader1@tradex.com\",\n  \"password\": \"Password123!\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            },
-            "description": "Authenticate trader user and capture JWT token & user ID."
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "description": "Login trader. jwt_token and user_id are auto-saved to collection variables."
           }
         },
+
         {
           "name": "Register Admin User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    var res = pm.response.json();",
-                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
-                  "    if (token) {",
-                  "        pm.collectionVariables.set('admin_jwt_token', token);",
-                  "        console.log('Saved admin_jwt_token:', token);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Register Admin - status 201', function() {",
+                "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                "});",
+                "var res = pm.response.json();",
+                "if (res.data && res.data.accessToken) {",
+                "    pm.collectionVariables.set('admin_jwt_token', res.data.accessToken);",
+                "    pm.test('admin_jwt_token saved', function() { pm.expect(res.data.accessToken).to.not.be.empty; });",
+                "}"
+              ]
             }
-          ],
+          }],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin1@tradex.com\",\n  \"password\": \"AdminPass123!\",\n  \"fullName\": \"System Admin\",\n  \"role\": \"ROLE_ADMIN\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
-            },
-            "description": "Register a new system administrator."
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "description": "Register admin user. admin_jwt_token auto-saved."
           }
         },
+
         {
           "name": "Login Admin User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "    var res = pm.response.json();",
-                  "    var token = res.data ? (res.data.accessToken || res.data.token) : null;",
-                  "    if (token) {",
-                  "        pm.collectionVariables.set('admin_jwt_token', token);",
-                  "        console.log('Saved admin_jwt_token:', token);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Login Admin - status 200', function() {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "var res = pm.response.json();",
+                "if (res.data && res.data.accessToken) {",
+                "    pm.collectionVariables.set('admin_jwt_token', res.data.accessToken);",
+                "    pm.test('admin_jwt_token saved', function() { pm.expect(res.data.accessToken).to.not.be.empty; });",
+                "}"
+              ]
             }
-          ],
+          }],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin1@tradex.com\",\n  \"password\": \"AdminPass123!\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            },
-            "description": "Authenticate admin user and capture Admin JWT token."
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "description": "Login admin. admin_jwt_token auto-saved."
           }
         }
+
       ]
     },
+
     {
       "name": "2. Trader (User) Endpoints",
       "item": [
+
         {
           "name": "Profile & Account",
           "item": [
+
             {
               "name": "Get Current User Profile",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/auth/me",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "auth", "me"]
-                },
-                "description": "Retrieve profile details of authenticated user."
+                "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] },
+                "description": "Returns logged-in user profile details."
               }
             },
+
             {
-              "name": "Get User Account Balances",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.userId) {",
-                      "        pm.collectionVariables.set('user_id', res.data.userId);",
-                      "        console.log('Saved user_id:', res.data.userId);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Get Account Balances",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Account - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.userId) {",
+                    "    pm.collectionVariables.set('user_id', res.data.userId);",
+                    "    pm.test('user_id saved from account', function() { pm.expect(res.data.userId).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/account",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "account"]
-                },
-                "description": "Retrieve trader available and locked cash balance."
+                "url": { "raw": "{{baseUrl}}/api/account", "host": ["{{baseUrl}}"], "path": ["api","account"] },
+                "description": "Returns availableBalance and lockedBalance for the logged-in trader."
               }
             }
+
           ]
         },
+
         {
           "name": "Stocks Market Data",
           "item": [
+
             {
               "name": "Get All Tradable Stocks",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.length > 0) {",
-                      "        pm.collectionVariables.set('stock_id', res.data[0].id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Stocks - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.length > 0) {",
+                    "    pm.collectionVariables.set('stock_symbol', res.data[0].symbol);",
+                    "    pm.test('stock_symbol saved: ' + res.data[0].symbol, function() { pm.expect(res.data[0].symbol).to.not.be.empty; });",
+                    "}"
+                  ]
                 }
-              ],
+              }],
               "request": {
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/stocks",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "stocks"]
-                },
-                "description": "Fetch active tradable stocks list."
+                "url": { "raw": "{{baseUrl}}/api/stocks", "host": ["{{baseUrl}}"], "path": ["api","stocks"] },
+                "description": "No auth required. Returns list of all tradable stocks."
               }
             },
+
             {
-              "name": "Get Stock by Symbol",
+              "name": "Get Stock by Symbol (AAPL)",
               "request": {
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/stocks/symbol/AAPL",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "stocks", "symbol", "AAPL"]
-                },
-                "description": "Fetch detailed stock information by symbol."
+                "url": { "raw": "{{baseUrl}}/api/stocks/AAPL", "host": ["{{baseUrl}}"], "path": ["api","stocks","AAPL"] },
+                "description": "No auth required. Returns details of AAPL stock."
               }
             },
+
             {
-              "name": "Get Stock by ID",
+              "name": "Get Stock Price (AAPL)",
               "request": {
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/stocks/{{stock_id}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "stocks", "{{stock_id}}"]
-                },
-                "description": "Fetch stock details by unique stock ID."
+                "url": { "raw": "{{baseUrl}}/api/stocks/AAPL/price", "host": ["{{baseUrl}}"], "path": ["api","stocks","AAPL","price"] },
+                "description": "No auth required. Returns current price of AAPL."
               }
             }
+
           ]
         },
+
         {
           "name": "Order Management & Matching",
           "item": [
+
             {
               "name": "Place LIMIT BUY Order",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.id) {",
-                      "        pm.collectionVariables.set('order_id', res.data.id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Place LIMIT BUY - status 200 or 201', function() {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                    "});",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.id) {",
+                    "    pm.collectionVariables.set('order_id', res.data.id);",
+                    "    pm.test('order_id saved', function() { pm.expect(res.data.id).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"BUY\",\n  \"orderType\": \"LIMIT\",\n  \"quantity\": 10,\n  \"limitPrice\": 150.0000,\n  \"clientOrderId\": \"cli-ord-\" + Math.floor(Math.random() * 1000000)\n}"
+                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"BUY\",\n  \"orderType\": \"LIMIT\",\n  \"quantity\": 10,\n  \"limitPrice\": 150.00,\n  \"clientOrderId\": \"limit-buy-001\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders"]
-                },
-                "description": "Submit a limit buy order with pre-trade risk and compliance evaluation."
+                "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] },
+                "description": "Places a LIMIT BUY order. Locks $1500 from available balance. order_id auto-saved."
               }
             },
+
             {
               "name": "Place LIMIT SELL Order",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Place LIMIT SELL - status 200 or 201', function() {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                    "});",
+                    "var res = pm.response.json();",
+                    "pm.test('Sell order side is SELL', function() {",
+                    "    pm.expect(res.data.side).to.eql('SELL');",
+                    "});"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"SELL\",\n  \"orderType\": \"LIMIT\",\n  \"quantity\": 5,\n  \"limitPrice\": 150.0000,\n  \"clientOrderId\": \"cli-ord-sell-\" + Math.floor(Math.random() * 1000000)\n}"
+                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"SELL\",\n  \"orderType\": \"LIMIT\",\n  \"quantity\": 5,\n  \"limitPrice\": 150.00,\n  \"clientOrderId\": \"limit-sell-001\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders"]
-                },
-                "description": "Submit a limit sell order matching resting limit buy orders."
+                "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] },
+                "description": "Places a LIMIT SELL. Matching engine instantly fills against resting BUY at same price."
               }
             },
+
             {
               "name": "Place MARKET BUY Order",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"BUY\",\n  \"orderType\": \"MARKET\",\n  \"quantity\": 2,\n  \"clientOrderId\": \"cli-ord-mkt-\" + Math.floor(Math.random() * 1000000)\n}"
+                  "raw": "{\n  \"symbol\": \"AAPL\",\n  \"side\": \"BUY\",\n  \"orderType\": \"MARKET\",\n  \"quantity\": 2,\n  \"clientOrderId\": \"market-buy-001\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders"]
-                },
-                "description": "Submit an immediate market buy order against available sell liquidity."
+                "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] },
+                "description": "Executes immediately against resting sell orders."
               }
             },
+
             {
-              "name": "Get User Orders History",
+              "name": "Get My Orders",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders"]
-                },
-                "description": "Fetch list of all orders submitted by authenticated user."
+                "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api","orders"] },
+                "description": "Returns all orders placed by logged-in trader."
               }
             },
+
             {
               "name": "Get Order by ID",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders/{{order_id}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders", "{{order_id}}"]
-                },
-                "description": "Fetch order details by order ID."
+                "url": { "raw": "{{baseUrl}}/api/orders/{{order_id}}", "host": ["{{baseUrl}}"], "path": ["api","orders","{{order_id}}"] },
+                "description": "Returns details of a specific order. Uses {{order_id}} auto-saved."
               }
             },
+
             {
-              "name": "Cancel Order",
+              "name": "Cancel Order (DELETE)",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
+                "method": "DELETE",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/orders/{{order_id}}/cancel",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "orders", "{{order_id}}", "cancel"]
-                },
-                "description": "Cancel an open resting limit order and release locked funds/shares."
+                "url": { "raw": "{{baseUrl}}/api/orders/{{order_id}}", "host": ["{{baseUrl}}"], "path": ["api","orders","{{order_id}}"] },
+                "description": "Cancels an OPEN order and releases locked funds/shares. Uses {{order_id}}."
               }
             }
+
           ]
         },
+
         {
           "name": "Portfolio & Positions",
           "item": [
+
             {
-              "name": "Get User Portfolio Positions",
+              "name": "Get My Portfolio",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/portfolio",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "portfolio"]
-                },
-                "description": "Retrieve user share holdings and position details."
+                "url": { "raw": "{{baseUrl}}/api/portfolio", "host": ["{{baseUrl}}"], "path": ["api","portfolio"] },
+                "description": "Returns all share positions held by the logged-in trader."
               }
             },
+
             {
-              "name": "Get Portfolio Summary",
+              "name": "Get Position by Symbol (AAPL)",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/portfolio/summary",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "portfolio", "summary"]
-                },
-                "description": "Retrieve total portfolio market valuation and un-realized gains."
+                "url": { "raw": "{{baseUrl}}/api/portfolio/AAPL", "host": ["{{baseUrl}}"], "path": ["api","portfolio","AAPL"] },
+                "description": "Returns position for a specific stock symbol."
               }
             }
+
           ]
         },
+
         {
-          "name": "Ledger & Activity Audit",
+          "name": "Ledger & Transactions",
           "item": [
+
             {
-              "name": "Get Double-Entry Ledger History",
+              "name": "Get Ledger Entries",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/ledger?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "ledger"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","ledger"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "Retrieve immutable double-entry ledger records for user account."
+                "description": "Immutable double-entry ledger records for the logged-in trader."
               }
             },
+
             {
-              "name": "Get Transaction Activity Records",
+              "name": "Get Transaction History",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/transactions?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "transactions"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","transactions"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "Retrieve financial activity audit records."
+                "description": "Full financial transaction audit log."
               }
             }
+
           ]
         },
+
         {
-          "name": "KYC Verification Workflow",
+          "name": "KYC Verification",
           "item": [
+
             {
-              "name": "Submit KYC Verification",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.id) {",
-                      "        pm.collectionVariables.set('kyc_id', res.data.id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Submit KYC",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Submit KYC - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.id) {",
+                    "    pm.collectionVariables.set('kyc_id', res.data.id);",
+                    "    pm.test('kyc_id saved', function() { pm.expect(res.data.id).to.not.be.empty; });",
+                    "}",
+                    "pm.test('KYC status is PENDING', function() {",
+                    "    pm.expect(res.data.status).to.eql('PENDING');",
+                    "});"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"level\": \"STANDARD\",\n  \"documentType\": \"PASSPORT\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/kyc/submit",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "kyc", "submit"]
-                },
-                "description": "Submit user KYC identity documents."
+                "url": { "raw": "{{baseUrl}}/api/kyc/submit", "host": ["{{baseUrl}}"], "path": ["api","kyc","submit"] },
+                "description": "Submit KYC documents. kyc_id auto-saved. Status will be PENDING."
               }
             },
+
             {
               "name": "Get KYC Status",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/kyc/status",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "kyc", "status"]
-                },
-                "description": "Check current KYC verification status."
+                "url": { "raw": "{{baseUrl}}/api/kyc/status", "host": ["{{baseUrl}}"], "path": ["api","kyc","status"] },
+                "description": "Returns current KYC status (PENDING / VERIFIED / REJECTED)."
               }
             },
+
             {
-              "name": "Retry KYC Verification",
+              "name": "Retry KYC",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"level\": \"STANDARD\",\n  \"documentType\": \"DRIVERS_LICENSE\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/kyc/retry",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "kyc", "retry"]
-                },
-                "description": "Retry rejected or expired KYC submission."
+                "url": { "raw": "{{baseUrl}}/api/kyc/retry", "host": ["{{baseUrl}}"], "path": ["api","kyc","retry"] },
+                "description": "Retry after KYC rejection."
               }
             }
+
           ]
         },
+
         {
-          "name": "Withdrawals Workflow",
+          "name": "Withdrawals",
           "item": [
+
             {
-              "name": "Request Cash Withdrawal",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.id) {",
-                      "        pm.collectionVariables.set('withdrawal_id', res.data.id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Request Withdrawal",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Withdrawal - status 200 or 201', function() {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                    "});",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.id) {",
+                    "    pm.collectionVariables.set('withdrawal_id', res.data.id);",
+                    "    pm.test('withdrawal_id saved', function() { pm.expect(res.data.id).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"amount\": 500.0000,\n  \"idempotencyKey\": \"wdr-idemp-\" + Math.floor(Math.random() * 1000000),\n  \"destinationReference\": \"US-BANK-ACCT-987654321\"\n}"
+                  "raw": "{\n  \"amount\": 500.00,\n  \"destinationReference\": \"BANK-ACCT-987654321\",\n  \"idempotencyKey\": \"wdr-key-001\"\n}"
                 },
-                "url": {
-                  "raw": "{{baseUrl}}/api/withdrawals",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "withdrawals"]
-                },
-                "description": "Request cash withdrawal with 8-point eligibility validation."
+                "url": { "raw": "{{baseUrl}}/api/withdrawals", "host": ["{{baseUrl}}"], "path": ["api","withdrawals"] },
+                "description": "Submit withdrawal request. withdrawal_id auto-saved. Must have VERIFIED KYC."
               }
             },
+
             {
-              "name": "Get User Withdrawals List",
+              "name": "Get My Withdrawals",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/withdrawals?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "withdrawals"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","withdrawals"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "List all withdrawals requested by user."
+                "description": "Lists all withdrawal requests made by logged-in trader."
               }
             },
+
             {
               "name": "Get Withdrawal by ID",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/withdrawals/{{withdrawal_id}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "withdrawals", "{{withdrawal_id}}"]
-                },
-                "description": "Fetch details of a single withdrawal request."
+                "url": { "raw": "{{baseUrl}}/api/withdrawals/{{withdrawal_id}}", "host": ["{{baseUrl}}"], "path": ["api","withdrawals","{{withdrawal_id}}"] },
+                "description": "Get details of a specific withdrawal."
               }
             },
+
             {
               "name": "Cancel Withdrawal",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "POST",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/withdrawals/{{withdrawal_id}}/cancel",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "withdrawals", "{{withdrawal_id}}", "cancel"]
-                },
-                "description": "Cancel pending withdrawal and release reserved funds back to user."
+                "url": { "raw": "{{baseUrl}}/api/withdrawals/{{withdrawal_id}}/cancel", "host": ["{{baseUrl}}"], "path": ["api","withdrawals","{{withdrawal_id}}","cancel"] },
+                "description": "Cancel a PENDING withdrawal and release reserved funds."
               }
             }
+
           ]
         },
+
         {
           "name": "Notifications",
           "item": [
+
             {
-              "name": "Get User Notifications",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.content && res.data.content.length > 0) {",
-                      "        pm.collectionVariables.set('notification_id', res.data.content[0].id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Get My Notifications",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Notifications - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.content && res.data.content.length > 0) {",
+                    "    pm.collectionVariables.set('notification_id', res.data.content[0].id);",
+                    "    pm.test('notification_id saved', function() { pm.expect(res.data.content[0].id).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/notifications?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "notifications"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","notifications"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "Retrieve user notification messages."
+                "description": "Returns notifications (order fills, deposits, KYC updates). notification_id auto-saved."
               }
             },
+
             {
               "name": "Mark Notification as Read",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "POST",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
+                "method": "PATCH",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/notifications/{{notification_id}}/read",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "notifications", "{{notification_id}}", "read"]
-                },
-                "description": "Mark notification as read."
+                "url": { "raw": "{{baseUrl}}/api/notifications/{{notification_id}}/read", "host": ["{{baseUrl}}"], "path": ["api","notifications","{{notification_id}}","read"] },
+                "description": "Mark notification as read. Uses {{notification_id}}."
               }
             }
+
           ]
         }
+
       ]
     },
+
     {
       "name": "3. Admin Endpoints",
       "item": [
+
         {
-          "name": "Deposit Cash into User Account",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{admin_jwt_token}}",
-                  "type": "string"
+          "name": "Account Management",
+          "item": [
+            {
+              "name": "Deposit Funds into User Account",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Deposit - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "pm.test('Available balance increased', function() {",
+                    "    pm.expect(res.data.availableBalance).to.be.above(0);",
+                    "});"
+                  ]
                 }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"amount\": 50000.00,\n  \"description\": \"Initial account deposit\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/api/account/deposit", "host": ["{{baseUrl}}"], "path": ["api","account","deposit"] },
+                "description": "ADMIN ONLY. Deposit $50,000 into {{user_id}} account. Requires admin_jwt_token."
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"amount\": 50000.0000,\n  \"description\": \"Initial account deposit\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/account/deposit",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "account", "deposit"]
-            },
-            "description": "Admin endpoint: Deposit cash funds into target user trading account."
-          }
+            }
+          ]
         },
+
+        {
+          "name": "Stock Price Management",
+          "item": [
+            {
+              "name": "Update Stock Price (AAPL)",
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPrice\": 155.00\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/api/stocks/AAPL/price", "host": ["{{baseUrl}}"], "path": ["api","stocks","AAPL","price"] },
+                "description": "ADMIN ONLY. Update the current price of AAPL stock."
+              }
+            }
+          ]
+        },
+
         {
           "name": "KYC Approvals",
           "item": [
+
             {
               "name": "Get Pending KYC Submissions",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.content && res.data.content.length > 0) {",
-                      "        pm.collectionVariables.set('kyc_id', res.data.content[0].id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Pending KYCs - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.content && res.data.content.length > 0) {",
+                    "    pm.collectionVariables.set('kyc_id', res.data.content[0].id);",
+                    "    pm.test('kyc_id saved from pending list', function() { pm.expect(res.data.content[0].id).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/admin/kyc/pending?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "kyc", "pending"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","kyc","pending"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "Admin endpoint: list pending KYC verifications requiring review."
+                "description": "ADMIN ONLY. List pending KYC verifications. kyc_id auto-saved."
               }
             },
+
             {
-              "name": "Approve KYC Verification",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Approve KYC",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Approve KYC - status 200', function() { pm.response.to.have.status(200); });",
+                    "pm.test('KYC status is VERIFIED', function() {",
+                    "    pm.expect(pm.response.json().data.status).to.eql('VERIFIED');",
+                    "});"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "POST",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/admin/kyc/{{kyc_id}}/approve?level=STANDARD",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "kyc", "{{kyc_id}}", "approve"],
-                  "query": [
-                    {
-                      "key": "level",
-                      "value": "STANDARD"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","kyc","{{kyc_id}}","approve"],
+                  "query": [{ "key": "level", "value": "STANDARD" }]
                 },
-                "description": "Admin endpoint: approve user KYC verification."
+                "description": "ADMIN ONLY. Approve KYC submission. Uses {{kyc_id}}."
               }
             },
+
             {
-              "name": "Reject KYC Verification",
+              "name": "Reject KYC",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "POST",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/admin/kyc/{{kyc_id}}/reject?reason=Document unreadable",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "kyc", "{{kyc_id}}", "reject"],
-                  "query": [
-                    {
-                      "key": "reason",
-                      "value": "Document unreadable"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","kyc","{{kyc_id}}","reject"],
+                  "query": [{ "key": "reason", "value": "Document unreadable" }]
                 },
-                "description": "Admin endpoint: reject user KYC verification."
+                "description": "ADMIN ONLY. Reject KYC submission."
               }
             }
+
           ]
         },
+
         {
           "name": "Withdrawal Approvals",
           "item": [
+
             {
-              "name": "Get Pending Withdrawal Requests",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    var res = pm.response.json();",
-                      "    if (res.data && res.data.content && res.data.content.length > 0) {",
-                      "        pm.collectionVariables.set('withdrawal_id', res.data.content[0].id);",
-                      "    }",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Get Pending Withdrawals",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Pending Withdrawals - status 200', function() { pm.response.to.have.status(200); });",
+                    "var res = pm.response.json();",
+                    "if (res.data && res.data.content && res.data.content.length > 0) {",
+                    "    pm.collectionVariables.set('withdrawal_id', res.data.content[0].id);",
+                    "    pm.test('withdrawal_id saved from pending list', function() { pm.expect(res.data.content[0].id).to.not.be.empty; });",
+                    "}"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/admin/withdrawals/pending?page=0&size=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "withdrawals", "pending"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "0"
-                    },
-                    {
-                      "key": "size",
-                      "value": "20"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","withdrawals","pending"],
+                  "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
                 },
-                "description": "Admin endpoint: list pending withdrawal requests."
+                "description": "ADMIN ONLY. List pending withdrawal requests. withdrawal_id auto-saved."
               }
             },
+
             {
-              "name": "Approve Withdrawal Request",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
+              "name": "Approve Withdrawal",
+              "event": [{
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Approve Withdrawal - status 200', function() { pm.response.to.have.status(200); });",
+                    "pm.test('Withdrawal status is COMPLETED', function() {",
+                    "    pm.expect(pm.response.json().data.status).to.eql('COMPLETED');",
+                    "});"
                   ]
-                },
+                }
+              }],
+              "request": {
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "POST",
                 "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/admin/withdrawals/{{withdrawal_id}}/approve",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "withdrawals", "{{withdrawal_id}}", "approve"]
-                },
-                "description": "Admin endpoint: approve cash withdrawal and process payout."
+                "url": { "raw": "{{baseUrl}}/api/admin/withdrawals/{{withdrawal_id}}/approve", "host": ["{{baseUrl}}"], "path": ["api","admin","withdrawals","{{withdrawal_id}}","approve"] },
+                "description": "ADMIN ONLY. Approve and process withdrawal payout."
               }
             },
+
             {
-              "name": "Reject Withdrawal Request",
+              "name": "Reject Withdrawal",
               "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{admin_jwt_token}}",
-                      "type": "string"
-                    }
-                  ]
-                },
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}", "type": "string" }] },
                 "method": "POST",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/admin/withdrawals/{{withdrawal_id}}/reject?reason=Compliance flag",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["api", "admin", "withdrawals", "{{withdrawal_id}}", "reject"],
-                  "query": [
-                    {
-                      "key": "reason",
-                      "value": "Compliance flag"
-                    }
-                  ]
+                  "host": ["{{baseUrl}}"], "path": ["api","admin","withdrawals","{{withdrawal_id}}","reject"],
+                  "query": [{ "key": "reason", "value": "Compliance flag" }]
                 },
-                "description": "Admin endpoint: reject cash withdrawal and return funds."
+                "description": "ADMIN ONLY. Reject withdrawal and return funds to user."
               }
             }
+
           ]
         }
+
       ]
     }
+
   ]
 }
