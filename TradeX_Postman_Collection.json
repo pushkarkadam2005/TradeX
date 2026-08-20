@@ -233,8 +233,9 @@
               "request": {
                 "method": "GET",
                 "header": [],
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "url": { "raw": "{{baseUrl}}/api/stocks", "host": ["{{baseUrl}}"], "path": ["api","stocks"] },
-                "description": "No auth required. Returns list of all tradable stocks."
+                "description": "Requires jwt_token. Returns list of all tradable stocks."
               }
             },
 
@@ -243,8 +244,9 @@
               "request": {
                 "method": "GET",
                 "header": [],
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "url": { "raw": "{{baseUrl}}/api/stocks/AAPL", "host": ["{{baseUrl}}"], "path": ["api","stocks","AAPL"] },
-                "description": "No auth required. Returns details of AAPL stock."
+                "description": "Requires jwt_token. Returns details of AAPL stock."
               }
             },
 
@@ -253,8 +255,9 @@
               "request": {
                 "method": "GET",
                 "header": [],
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }] },
                 "url": { "raw": "{{baseUrl}}/api/stocks/AAPL/price", "host": ["{{baseUrl}}"], "path": ["api","stocks","AAPL","price"] },
-                "description": "No auth required. Returns current price of AAPL."
+                "description": "Requires jwt_token. Returns current price of AAPL."
               }
             }
 
