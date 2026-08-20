@@ -259,6 +259,23 @@
       "item": [
         {
           "name": "Get User Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var res = pm.response.json();",
+                  "    if (res.data && res.data.userId) {",
+                  "        pm.collectionVariables.set('user_id', res.data.userId);",
+                  "        console.log('Saved user_id:', res.data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -281,14 +298,14 @@
           }
         },
         {
-          "name": "Deposit Funds",
+          "name": "Deposit Funds (Admin)",
           "request": {
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_jwt_token}}",
                   "type": "string"
                 }
               ]
@@ -302,14 +319,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"amount\": 50000.0000,\n  \"currency\": \"USD\"\n}"
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"amount\": 50000.0000,\n  \"description\": \"Initial account deposit\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/account/deposit",
               "host": ["{{baseUrl}}"],
               "path": ["api", "account", "deposit"]
             },
-            "description": "Deposit cash funds into user trading account."
+            "description": "Deposit cash funds into user trading account (Requires Admin token)."
           }
         }
       ]
